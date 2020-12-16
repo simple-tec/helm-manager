@@ -1,13 +1,12 @@
 apiVersion: ensaas.k8s.io/v1
 kind: HelmRelease
 metadata:
-  name: helm1
+  name: mykyverno
 spec:
-  repourl: "https://**harbor.**/chartrepo/"
-  reponame: "reponame"
+  repourl: "https://kyverno.github.io/kyverno/"
+  reponame: "kyverno"
   user: "user"
-  password: "user"
+  password: "passwd"
   namespace: "study"
-  name: "helm-name"
-  version: "1.0.3"
-  settings: ""
+  name: "kyverno"
+  version: "1.2.1"

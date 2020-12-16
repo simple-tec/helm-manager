@@ -17,7 +17,7 @@ func AddHelmRepo(username string, passwd string, repoName string, url string) (b
 		klog.Errorf("AddHelmRepo error: %s\n", str)
 	}
 
-	command := GetHelm3CliPath() + " repo add --username " + username + " --password " + passwd + " " + repoName + " " + url + repoName
+	command := GetHelm3CliPath() + " repo add --username " + username + " --password " + passwd + " " + repoName + " " + url
 	klog.Info("command: ", command)
 	str, err = linux.PostShCmd(command)
 	if err != nil {
@@ -32,9 +32,9 @@ func InstallHelm(ns, repo, name string, chartName, versionName, kubeconfig, sett
 	var command string
 	appinfo := repo + "/" + chartName + " --version " + versionName
 	if settings == "" {
-		command = GetHelm3CliPath() + " install " + name + " --namespace=" + ns + " " + appinfo + " --set --kubeconfig=" + kubeconfig
+		command = GetHelm3CliPath() + " install " + name + " --namespace=" + ns + " " + appinfo + " --kubeconfig=" + kubeconfig
 	} else {
-		command = GetHelm3CliPath() + " install " + name + " --namespace=" + ns + " " + appinfo + " " + settings + " --set --kubeconfig=" + kubeconfig
+		command = GetHelm3CliPath() + " install " + name + " --namespace=" + ns + " " + appinfo + " --set " + settings + " --kubeconfig=" + kubeconfig
 	}
 
 	klog.Info("command: ", command)

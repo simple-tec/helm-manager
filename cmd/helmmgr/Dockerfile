@@ -27,6 +27,8 @@ COPY --from=0 /go/src/helm-manager/helmmgr ./
 
 COPY --from=0 /bin/kubectl /bin/kubectl
 
+COPY --from=0 /bin/helm /bin/helm
+
 WORKDIR /helmmgr
 
 RUN mkdir -p /opt/.kube/
