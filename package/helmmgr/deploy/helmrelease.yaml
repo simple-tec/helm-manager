@@ -1,0 +1,13 @@
+apiVersion: ensaas.k8s.io/v1
+kind: HelmRelease
+metadata:
+  name: helm1
+spec:
+  repourl: "https://**harbor.**/chartrepo/"
+  reponame: "reponame"
+  user: "user"
+  password: "user"
+  namespace: "study"
+  name: "helm-name"
+  version: "1.0.3"
+  settings: ""

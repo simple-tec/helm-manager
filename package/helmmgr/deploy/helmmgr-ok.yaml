@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: clusteradmin-serviceaccount
+  namespace: study
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: helm-rolebinding
+  namespace: study
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: clusteradmin-serviceaccount
+    namespace: study
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helmmgr
+  namespace: study
+  labels:
+    app: helmmgr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helmmgr
+  template:
+    metadata:
+      labels:
+        app: helmmgr
+    spec:
+      serviceAccountName: clusteradmin-serviceaccount
+      containers:
+        - name: helmmgr
+          image: registry.cn-shanghai.aliyuncs.com/digk8s/helmmgr:v1.0.0
+          resources:
+            requests:
+              memory: "20Mi"
+              cpu: "10m"
+              ephemeral-storage: "100Mi"
+            limits:
+              memory: "100Mi"
+              cpu: "165m"
+              ephemeral-storage: "200Mi"
+          imagePullPolicy: Always
