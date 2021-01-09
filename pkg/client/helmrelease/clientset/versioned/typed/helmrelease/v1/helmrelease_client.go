@@ -30,7 +30,7 @@ type HelmreleaseV1Interface interface {
 	HelmReleasesGetter
 }
 
-// HelmreleaseV1Client is used to interact with features provided by the helmrelease.ensaas.k8s.io group.
+// HelmreleaseV1Client is used to interact with features provided by the helmrelease.simple.k8s.io group.
 type HelmreleaseV1Client struct {
 	restClient rest.Interface
 }

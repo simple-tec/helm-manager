@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
@@ -36,154 +35,6 @@ func GetK8SConfig() (*rest.Config, error) {
 	}
 }
 
-func Url2Resource(url string) (string, string, string, string, error) {
-	kind := ""
-	group := ""
-	name := ""
-	namespace := ""
-
-	index := strings.Index(url, "?")
-	if index > 0 {
-		url = url[0:index]
-	}
-
-	if strings.HasPrefix(url, "/api/v1/") {
-		urlArr := strings.Split(url, "/")
-		switch len(urlArr) {
-		case 4: // /api/v1/namespaces
-			kind = urlArr[3]
-		case 5: // /api/v1/namespaces/nsname
-			kind = urlArr[3]
-			name = urlArr[4]
-		case 6: // /api/v1/namespaces/default/pods
-			namespace = urlArr[4]
-			kind = urlArr[5]
-		case 7:
-			// /api/v1/namespaces/default/pods/podname
-			// /api/v1/namespaces/default/services/my-service
-			namespace = urlArr[4]
-			kind = urlArr[5]
-			name = urlArr[6]
-		case 8:
-			namespace = urlArr[4]
-			kind = urlArr[5]
-			name = urlArr[6]
-		default:
-			return "", "", "", "", fmt.Errorf("Not found")
-		}
-	} else if strings.HasPrefix(url, "/apis/") {
-		urlArr := strings.Split(url, "/")
-
-		switch len(urlArr) {
-		case 4:
-			return "", "", "", "", nil
-		case 5: // /apis/apps/v1/deployments    /apis/ensaas.k8s.io/v1/workspaces
-			group = urlArr[2]
-			kind = urlArr[4]
-		case 6: // /apis/apps/v1/workspaces/wsname
-			group = urlArr[2]
-			kind = urlArr[4]
-			name = urlArr[5]
-		case 7: // /apis/apps/v1/namespaces/default/deployments
-			group = urlArr[2]
-			namespace = urlArr[5]
-			kind = urlArr[6]
-		case 8: //  /apis/apps/v1/namespaces/default/deployments/deployname
-			group = urlArr[2]
-			namespace = urlArr[5]
-			kind = urlArr[6]
-			name = urlArr[7]
-		case 9: //  /apis/apps/v1/namespaces/default/deployments/deployname
-			group = urlArr[2]
-			namespace = urlArr[5]
-			kind = urlArr[6]
-			name = urlArr[7]
-		default:
-			return "", "", "", "", fmt.Errorf("Not found")
-		}
-	}
-
-	return group, kind, namespace, name, nil
-}
-
-func Url2ResourceWithVersion(url string) (string, string, string, string, string, error) {
-	kind := ""
-	group := ""
-	name := ""
-	namespace := ""
-	version := ""
-
-	index := strings.Index(url, "?")
-	if index > 0 {
-		url = url[0:index]
-	}
-
-	if strings.HasPrefix(url, "/api/v1/") {
-		urlArr := strings.Split(url, "/")
-		switch len(urlArr) {
-		case 4: // /api/v1/namespaces
-			version = urlArr[2]
-			kind = urlArr[3]
-		case 5: // /api/v1/namespaces/nsname
-			version = urlArr[2]
-			kind = urlArr[3]
-			name = urlArr[4]
-		case 6: // /api/v1/namespaces/default/pods
-			version = urlArr[2]
-			namespace = urlArr[4]
-			kind = urlArr[5]
-		case 7: // /api/v1/namespaces/default/pods/podname
-			version = urlArr[2]
-			namespace = urlArr[4]
-			kind = urlArr[5]
-			name = urlArr[6]
-		case 8:
-			version = urlArr[2]
-			namespace = urlArr[4]
-			kind = urlArr[5]
-			name = urlArr[6]
-		default:
-			return "", "", "", "", "", fmt.Errorf("Not found")
-		}
-	} else if strings.HasPrefix(url, "/apis/") {
-		urlArr := strings.Split(url, "/")
-
-		switch len(urlArr) {
-		case 4:
-			return "", "", "", "", "", nil
-		case 5: // /apis/apps/v1/deployments    /apis/ensaas.k8s.io/v1/workspaces
-			group = urlArr[2]
-			version = urlArr[3]
-			kind = urlArr[4]
-		case 6: // /apis/apps/v1/workspaces/wsname
-			group = urlArr[2]
-			version = urlArr[3]
-			kind = urlArr[4]
-			name = urlArr[5]
-		case 7: // /apis/apps/v1/namespaces/default/deployments
-			group = urlArr[2]
-			version = urlArr[3]
-			namespace = urlArr[5]
-			kind = urlArr[6]
-		case 8: //  /apis/apps/v1/namespaces/default/deployments/deployname
-			group = urlArr[2]
-			version = urlArr[3]
-			namespace = urlArr[5]
-			kind = urlArr[6]
-			name = urlArr[7]
-		case 9: //  /apis/apps/v1/namespaces/default/deployments/deployname
-			group = urlArr[2]
-			version = urlArr[3]
-			namespace = urlArr[5]
-			kind = urlArr[6]
-			name = urlArr[7]
-		default:
-			return "", "", "", "", "", fmt.Errorf("Not found")
-		}
-	}
-
-	return group, kind, version, namespace, name, nil
-}
 
 func Config2String(cfg *rest.Config, userName, clusterName string) string {
 	insecuryCertConfig :=
@@ -517,9 +368,6 @@ current-context: %s`
 	return config
 }
 
-func GetDomain() string {
-	return "api-mp-ensaas." + os.Getenv("cluster") + "." + os.Getenv("domain")
-}
 func IsPodRunning(pod corev1.Pod) bool {
 	result := true
 	if pod.Status.ContainerStatuses == nil {

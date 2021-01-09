@@ -1,4 +1,5 @@
-FROM golang:1.13.9-alpine3.11
+#FROM golang:1.13.9-alpine3.11
+FROM registry.cn-shanghai.aliyuncs.com/advantech-k8s/golang:1.13.9-alpine3.11
 
 WORKDIR $GOPATH/src/helm-manager
 

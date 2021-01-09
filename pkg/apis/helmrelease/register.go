@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	GroupName = "ensaas.k8s.io"
+	GroupName = "simple.k8s.io"
 	Version   = "v1"
 	Kind      = "HelmRelease"
 	Plural    = "helmreleases"
