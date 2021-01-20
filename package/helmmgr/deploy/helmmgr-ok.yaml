@@ -41,7 +41,7 @@ spec:
       serviceAccountName: clusteradmin-serviceaccount
       containers:
         - name: helmmgr
-          image: registry.cn-shanghai.aliyuncs.com/digk8s/helmmgr:v1.0.0
+          image: registry.cn-shanghai.aliyuncs.com/digk8s/helmmgr:v1.0.1
           resources:
             requests:
               memory: "20Mi"

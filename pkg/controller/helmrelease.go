@@ -168,32 +168,8 @@ func NewHelmreleaseController(
 
 	helmInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			go func(obj interface{}) {
-				helmObj := obj.(*helmreleasev1.HelmRelease)
-				klog.Info("AddFunc, %#v ...", helmObj)
-				if helmObj.Status.Status != "" {
-					return
-				}
-				namespace := helmObj.Spec.Namespace
-				repoUrl := helmObj.Spec.RepoUrl
-				user := helmObj.Spec.User
-				password := helmObj.Spec.Password
-				charName := helmObj.Spec.Name
-				charVersion := helmObj.Spec.Version
-				settings := helmObj.Spec.Settings
-				repoName := helmObj.Spec.RepoName
-				name := helmObj.Name
-				//helmObj.SetFinalizers([]string{"finalizer.helmrelease"})
-				klog.Infof("namespace:%s, url:%s, user:%s, passwd:%s, charName:%s, version:%s, settings:%s\n", namespace, repoUrl, user, password, charName, charVersion, settings)
-				ret, str := installHelm(namespace, repoName, repoUrl, user, password, name, charName, charVersion, settings)
-				if ret == true {
-					helmObj.Status.Status = "Success"
-				} else {
-					helmObj.Status.Status = str
-				}
-				controller.helmClient.HelmreleaseV1().HelmReleases(namespace).UpdateStatus(helmObj)
-
-			}(obj)
+			klog.Info("AddFunc ...")
+			controller.enqueue(obj)
 			return
 		},
 		UpdateFunc: func(old, new interface{}) {
@@ -203,25 +179,12 @@ func NewHelmreleaseController(
 			if helmNew.ResourceVersion == helmOld.ResourceVersion {
 				return
 			}
+			//klog.Info("UpdateFunc ...")
 			//controller.enqueue(new)
 		},
 		DeleteFunc: func(obj interface{}) {
-			go func(obj interface{}) {
-				helmObj := obj.(*helmreleasev1.HelmRelease)
-				klog.Info("DeleteFunc, %#v ...", helmObj)
-				namespace := helmObj.Spec.Namespace
-				repoUrl := helmObj.Spec.RepoUrl
-				user := helmObj.Spec.User
-				password := helmObj.Spec.Password
-				charName := helmObj.Spec.Name
-				charVersion := helmObj.Spec.Version
-				settings := helmObj.Spec.Settings
-				repoName := helmObj.Spec.RepoName
-				name := helmObj.Name
-				klog.Infof("namespace:%s, url:%s, user:%s, passwd:%s, charName:%s, version:%s, settings:%s\n", namespace, repoUrl, user, password, charName, charVersion, settings)
-				removeHelm(namespace, repoName, repoUrl, user, password, name, charName, charVersion, settings)
-
-			}(obj)
+			klog.Info("DeleteFunc ...")
+			controller.enqueue(obj)
 			return
 		},
 	})
@@ -271,12 +234,12 @@ func (c *HelmreleaseController) processNextWorkItem() bool {
 	// We wrap this block in a func so we can defer c.workqueue.Done.
 	err := func(obj interface{}) error {
 		defer c.workqueue.Done(obj)
-		var key string
+		var key *helmreleasev1.HelmRelease
 		var ok bool
 
-		if key, ok = obj.(string); !ok {
+		if key, ok = obj.(*helmreleasev1.HelmRelease); !ok {
 			c.workqueue.Forget(obj)
-			runtime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
+			runtime.HandleError(fmt.Errorf("expected helmrelease object in workqueue but got %#v", obj))
 			return nil
 		}
 
@@ -297,36 +260,69 @@ func (c *HelmreleaseController) processNextWorkItem() bool {
 	return true
 }
 
-func (c *HelmreleaseController) syncHandler(key string) error {
-
-	// Convert the namespace/name string into a distinct namespace and name
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
-		return nil
-	}
+func (c *HelmreleaseController) syncHandler(obj interface{}) error {
+	helmObj := obj.(*helmreleasev1.HelmRelease)
+	//klog.Infof("update helmObj:  %#v ...", helmObj)
+	name := helmObj.Name
+	namespace := helmObj.Namespace
 	//get helm from cache
-	klog.Infof("helm, namespace: %s, name: %s", namespace, name)
+	klog.Infof("namespace: %s, name: %s", namespace, name)
 	helm, err := c.helmLister.HelmReleases(namespace).Get(name)
 	if err != nil {
 		// if obj is deleted ,will go here
 		if errors.IsNotFound(err) {
-			klog.Infof("helmrelease is deleted,  %s/%s ...", namespace, name)
-
+			//klog.Infof("helmrelease is deleted,  %s/%s ...", namespace, name)
+			klog.Infof("delete, %#v ...", helmObj)
+			namespace := helmObj.Spec.Namespace
+			repoUrl := helmObj.Spec.RepoUrl
+			user := helmObj.Spec.User
+			password := helmObj.Spec.Password
+			charName := helmObj.Spec.Name
+			charVersion := helmObj.Spec.Version
+			settings := helmObj.Spec.Settings
+			repoName := helmObj.Spec.RepoName
+			name := helmObj.Name
+			klog.Infof("namespace:%s, url:%s, user:%s, passwd:%s, charName:%s, version:%s, settings:%s\n", namespace, repoUrl, user, password, charName, charVersion, settings)
+			removeHelm(namespace, repoName, repoUrl, user, password, name, charName, charVersion, settings)
 			return nil
 		}
-		runtime.HandleError(fmt.Errorf("failed to list helmrelease by: %s/%s", namespace, name))
+		//runtime.HandleError(fmt.Errorf("failed to list helmrelease by: %s/%s", namespace, name))
+		klog.Info(err)
 		return err
 	}
 
-	klog.Infof("helmrelease's expection: %#v ...", helm)
-
+	klog.Infof("helmrelease's expection: %#v ...", helmObj)
+	if helmObj.Status.Status != "" {
+		return nil
+	}
+	instnamespace := helmObj.Spec.Namespace
+	repoUrl := helmObj.Spec.RepoUrl
+	user := helmObj.Spec.User
+	password := helmObj.Spec.Password
+	charName := helmObj.Spec.Name
+	charVersion := helmObj.Spec.Version
+	settings := helmObj.Spec.Settings
+	repoName := helmObj.Spec.RepoName
+	//name := helmObj.Name
+	//helmObj.SetFinalizers([]string{"finalizer.helmrelease"})
+	klog.Infof("instnamespace:%s, url:%s, user:%s, passwd:%s, charName:%s, version:%s, settings:%s\n", instnamespace, repoUrl, user, password, charName, charVersion, settings)
+	ret, str := installHelm(instnamespace, repoName, repoUrl, user, password, name, charName, charVersion, settings)
+	if ret == true {
+		helmObj.Status.Status = "Success"
+	} else {
+		helmObj.Status.Status = str
+	}
+	c.helmClient.HelmreleaseV1().HelmReleases(namespace).UpdateStatus(helmObj)
 	c.recorder.Event(helm, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 
 }
 
 func (c *HelmreleaseController) enqueue(obj interface{}) {
+	c.workqueue.AddRateLimited(obj)
+}
+
+func (c *HelmreleaseController) enqueueByKey(obj interface{}) {
 	var key string
 	var err error
 	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {

@@ -3,7 +3,7 @@ SRCDIR := $(PWD)
 CC := go
 
 REPO := registry.cn-shanghai.aliyuncs.com/digk8s/
-TAG := v1.0.0
+TAG := v1.0.1
 FLAGS := -ldflags "-s -w"
 
 all: helmmgr-bin
